@@ -533,8 +533,8 @@ footer{
 
       <div id="asr-success" class="success-card">
         <div class="success-icon">✅</div>
-        <div class="success-title">Reporte ASR enviado</div>
-        <div class="success-sub">Tu cliente de correo se abrirá con el reporte listo para enviar a <strong>sms@csfs.aero</strong>. Asegúrate de presionar "Enviar" en tu correo.</div>
+        <div class="success-title">Reporte ASR registrado</div>
+        <div class="success-sub">Tu reporte fue enviado exitosamente al sistema de Seguridad Operacional y está siendo revisado por el Coordinador SMS.</div>
         <button type="button" class="btn-new-report" onclick="showHome()">← Nuevo reporte</button>
       </div>
 
@@ -821,8 +821,8 @@ footer{
 
       <div id="rso-success" class="success-card">
         <div class="success-icon">✅</div>
-        <div class="success-title">Reporte RSO enviado</div>
-        <div class="success-sub">Tu cliente de correo se abrirá con el reporte listo para enviar a <strong>sms@csfs.aero</strong>. Asegúrate de presionar "Enviar" en tu correo.</div>
+        <div class="success-title">Reporte RSO registrado</div>
+        <div class="success-sub">Tu reporte fue enviado exitosamente al sistema de Seguridad Operacional y está siendo revisado por el Coordinador SMS.</div>
         <button type="button" class="btn-new-report" onclick="showHome()">← Nuevo reporte</button>
       </div>
 
@@ -850,6 +850,9 @@ footer{
 
 <!-- ══════════════ SCRIPTS ══════════════ -->
 <script>
+const API_BASE = 'https://atalaya-production-f377.up.railway.app/api';
+let currentOrgId = null;
+
 // Dark mode toggle
 (function(){
   const t=document.querySelector('[data-theme-toggle]'),r=document.documentElement;
@@ -876,18 +879,28 @@ function showForm(type){
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
-// QR Code generation
-window.addEventListener('load',()=>{
+// QR Code generation + org fetch on load
+window.addEventListener('load', async () => {
   const url=window.location.href;
   new QRCode(document.getElementById('qr-container'),{
     text:url,width:180,height:180,
     colorDark:'#1b4f8a',colorLight:'#ffffff',
     correctLevel:QRCode.CorrectLevel.H
   });
-  // Set today's date as default
   const today=new Date().toISOString().split('T')[0];
   document.getElementById('asr-fecha').value=today;
   document.getElementById('rso-fecha').value=today;
+
+  // Cargar organización desde Atalaya
+  try {
+    const res = await fetch(`${API_BASE}/auth/organizaciones`);
+    if (res.ok) {
+      const orgs = await res.json();
+      if (orgs.length > 0) currentOrgId = orgs[0].id;
+    }
+  } catch(e) {
+    console.warn('No se pudo conectar con Atalaya al cargar:', e);
+  }
 });
 
 function downloadQR(){
@@ -899,7 +912,6 @@ function downloadQR(){
   a.click();
 }
 
-// Build email body helper
 function collectForm(formId){
   const f=document.getElementById(formId);
   const data={};
@@ -933,8 +945,7 @@ Riesgo:                  ${d.riesgo||'—'}
 Defensas Propuestas:     ${d.defensas||'—'}
 
 --
-Enviado desde el Portal SMS · CSFS
-sms@csfs.aero`;
+Enviado desde el Portal SMS · CSFS`;
 }
 
 function buildRSOBody(d){
@@ -990,30 +1001,89 @@ ${d.detalle||'—'}
 ${d.terceros||'—'}
 
 --
-Enviado desde el Portal SMS · CSFS
-sms@csfs.aero`;
+Enviado desde el Portal SMS · CSFS`;
 }
 
-function submitASR(e){
+async function submitASR(e){
   e.preventDefault();
-  const d=collectForm('asr-form');
-  const subject=encodeURIComponent(`ASR Reporte — ${d.nombre||'Reportante'} — ${d.fecha||new Date().toLocaleDateString()}`);
-  const body=encodeURIComponent(buildASRBody(d));
-  window.location.href=`mailto:sms@csfs.aero?subject=${subject}&body=${body}`;
-  document.getElementById('asr-submitbar').style.display='none';
-  document.getElementById('asr-success').classList.add('show');
-  window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
+  const d = collectForm('asr-form');
+  const btn = document.querySelector('#asr-form .btn-submit');
+
+  if (!currentOrgId) {
+    alert('Error de conexión con el sistema Atalaya. Por favor recarga la página e intenta de nuevo.');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Enviando...';
+
+  try {
+    const res = await fetch(`${API_BASE}/reportes`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        organizacionId: currentOrgId,
+        reportanteId: null,
+        tipo: 'ASR',
+        descripcion: buildASRBody(d),
+        ubicacion: null,
+        area: 'HANDLING',
+        fechaEvento: d.fecha || null,
+        nivelConfidencialidad: d.confidencial === 'Sí' ? 'CONFIDENCIAL' : 'ANONIMO'
+      })
+    });
+
+    if (!res.ok) throw new Error(`Error ${res.status}`);
+
+    document.getElementById('asr-submitbar').style.display = 'none';
+    document.getElementById('asr-success').classList.add('show');
+    window.scrollTo({top: document.body.scrollHeight, behavior: 'smooth'});
+  } catch(err) {
+    alert('No se pudo enviar el reporte. Por favor intenta de nuevo.\n\nDetalle: ' + err.message);
+    btn.disabled = false;
+    btn.textContent = 'Enviar Reporte ASR';
+  }
 }
 
-function submitRSO(e){
+async function submitRSO(e){
   e.preventDefault();
-  const d=collectForm('rso-form');
-  const subject=encodeURIComponent(`RSO Reporte — ${d.nombre||'Reportante'} — ${d.aeropuerto||''} — ${d.fecha||new Date().toLocaleDateString()}`);
-  const body=encodeURIComponent(buildRSOBody(d));
-  window.location.href=`mailto:sms@csfs.aero?subject=${subject}&body=${body}`;
-  document.getElementById('rso-submitbar').style.display='none';
-  document.getElementById('rso-success').classList.add('show');
-  window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
+  const d = collectForm('rso-form');
+  const btn = document.querySelector('#rso-form .btn-submit');
+
+  if (!currentOrgId) {
+    alert('Error de conexión con el sistema Atalaya. Por favor recarga la página e intenta de nuevo.');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Enviando...';
+
+  try {
+    const res = await fetch(`${API_BASE}/reportes`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        organizacionId: currentOrgId,
+        reportanteId: null,
+        tipo: 'RSO',
+        descripcion: buildRSOBody(d),
+        ubicacion: d.aeropuerto || null,
+        area: 'OMA',
+        fechaEvento: d.fecha || null,
+        nivelConfidencialidad: d.confidencial === 'Sí' ? 'CONFIDENCIAL' : 'ANONIMO'
+      })
+    });
+
+    if (!res.ok) throw new Error(`Error ${res.status}`);
+
+    document.getElementById('rso-submitbar').style.display = 'none';
+    document.getElementById('rso-success').classList.add('show');
+    window.scrollTo({top: document.body.scrollHeight, behavior: 'smooth'});
+  } catch(err) {
+    alert('No se pudo enviar el reporte. Por favor intenta de nuevo.\n\nDetalle: ' + err.message);
+    btn.disabled = false;
+    btn.textContent = 'Enviar Reporte RSO';
+  }
 }
 </script>
 </body>
