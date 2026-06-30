@@ -68,6 +68,30 @@ function showHome() {
   showSection('home');
 }
 
+function copiarId(elementId) {
+  const id = document.getElementById(elementId)?.textContent?.trim();
+  if (!id || id === '—') return;
+  navigator.clipboard.writeText(id).then(() => {
+    const prefix = elementId.startsWith('asr') ? 'asr' : 'rso';
+    const icon = document.getElementById(`${prefix}-copy-icon`);
+    if (icon) {
+      icon.className = 'ph-bold ph-check';
+      setTimeout(() => { icon.className = 'ph-bold ph-copy'; }, 2000);
+    }
+  });
+}
+
+function verSeguimiento(elementId) {
+  const id = document.getElementById(elementId)?.textContent?.trim();
+  showTracking();
+  if (id && id !== '—') {
+    setTimeout(() => {
+      const input = document.getElementById('track-id-input');
+      if (input) { input.value = id; buscarReporte(); }
+    }, 300);
+  }
+}
+
 function showTracking() {
   showSection('report-tracking');
   document.getElementById('track-id-input').value = '';
@@ -443,6 +467,7 @@ async function submitASR(e) {
       await uploadPhotos(reporte.id, 'asr');
     }
 
+    document.getElementById('asr-reporte-id').textContent = reporte.id;
     document.getElementById('asr-submitbar').style.display = 'none';
     document.getElementById('asr-success').classList.add('show');
     window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
@@ -489,6 +514,7 @@ async function submitRSO(e) {
       await uploadPhotos(reporte.id, 'oma');
     }
 
+    document.getElementById('rso-reporte-id').textContent = reporte.id;
     document.getElementById('rso-submitbar').style.display = 'none';
     document.getElementById('rso-success').classList.add('show');
     window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });

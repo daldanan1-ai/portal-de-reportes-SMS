@@ -382,11 +382,18 @@
               </div>
             </div>
             <div class="success-title">¡Reporte ASR registrado!</div>
-            <div class="success-sub">Tu reporte fue enviado exitosamente a Atalaya SMS. Si ingresaste tu correo, recibirás una notificación cuando cambie el estado de tu reporte.</div>
+            <div class="success-sub">Tu reporte llegó al equipo de seguridad. Guarda tu número de reporte para hacer seguimiento.</div>
+            <div class="success-id-box" id="asr-id-box">
+              <span class="success-id-label"><i class="ph-bold ph-hash"></i> Número de reporte</span>
+              <span class="success-id-value" id="asr-reporte-id">—</span>
+              <button type="button" class="success-id-copy" onclick="copiarId('asr-reporte-id')" title="Copiar">
+                <i class="ph-bold ph-copy" id="asr-copy-icon"></i>
+              </button>
+            </div>
             <div class="success-actions">
-              <button type="button" class="btn-new-report" onclick="showHome()">
-                <i class="ph-bold ph-house"></i>
-                Ir al inicio
+              <button type="button" class="btn-new-report" onclick="verSeguimiento('asr-reporte-id')">
+                <i class="ph-bold ph-magnifying-glass"></i>
+                Ver seguimiento
               </button>
               <button type="button" class="btn-new-report-sec" onclick="showForm('handling')">
                 <i class="ph-bold ph-plus"></i>
@@ -817,11 +824,18 @@
               </div>
             </div>
             <div class="success-title">¡Reporte RSO registrado!</div>
-            <div class="success-sub">Tu reporte fue enviado exitosamente a Atalaya SMS. Si ingresaste tu correo, recibirás una notificación cuando cambie el estado de tu reporte.</div>
+            <div class="success-sub">Tu reporte llegó al equipo de seguridad. Guarda tu número de reporte para hacer seguimiento.</div>
+            <div class="success-id-box" id="rso-id-box">
+              <span class="success-id-label"><i class="ph-bold ph-hash"></i> Número de reporte</span>
+              <span class="success-id-value" id="rso-reporte-id">—</span>
+              <button type="button" class="success-id-copy" onclick="copiarId('rso-reporte-id')" title="Copiar">
+                <i class="ph-bold ph-copy" id="rso-copy-icon"></i>
+              </button>
+            </div>
             <div class="success-actions">
-              <button type="button" class="btn-new-report" onclick="showHome()">
-                <i class="ph-bold ph-house"></i>
-                Ir al inicio
+              <button type="button" class="btn-new-report" onclick="verSeguimiento('rso-reporte-id')">
+                <i class="ph-bold ph-magnifying-glass"></i>
+                Ver seguimiento
               </button>
               <button type="button" class="btn-new-report-sec" onclick="showForm('oma')">
                 <i class="ph-bold ph-plus"></i>

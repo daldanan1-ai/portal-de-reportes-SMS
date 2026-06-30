@@ -903,6 +903,32 @@ footer {
 .reporte-meta span { display: flex; align-items: center; gap: 4px; }
 .reporte-meta i { font-size: 0.85rem; }
 
+/* ── SUCCESS ID BOX ──────────────────────────────────────── */
+.success-id-box {
+  display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap;
+  background: var(--color-tracking-light);
+  border: 1.5px solid var(--color-tracking);
+  border-radius: var(--radius-xl);
+  padding: var(--space-3) var(--space-4);
+  margin: 0 auto var(--space-6); max-width: 520px;
+  justify-content: center;
+}
+.success-id-label {
+  display: flex; align-items: center; gap: 5px;
+  font-size: var(--text-xs); font-weight: 700; color: var(--color-tracking);
+  text-transform: uppercase; letter-spacing: 0.06em; flex-shrink: 0;
+}
+.success-id-value {
+  font-family: monospace; font-size: 0.75rem; font-weight: 600;
+  color: var(--color-text); word-break: break-all; flex: 1; text-align: center;
+}
+.success-id-copy {
+  background: none; border: 1.5px solid var(--color-tracking); border-radius: var(--radius-sm);
+  color: var(--color-tracking); cursor: pointer; padding: 3px 6px;
+  font-size: 0.85rem; flex-shrink: 0; transition: all var(--transition);
+}
+.success-id-copy:hover { background: var(--color-tracking); color: white; }
+
 /* ── SUCCESS ACTIONS ─────────────────────────────────────── */
 .success-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); justify-content: center; }
 .btn-new-report-sec {
