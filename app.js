@@ -28,6 +28,7 @@ async function getToken() {
 /* ── ESTADO ──────────────────────────────────────────────── */
 let selectedPhotos = { asr: [], oma: [] };
 let chatState = { open: false, initialized: false };
+let chatHistory = [];
 
 /* ── TEMA (dark / light) ─────────────────────────────────── */
 (function initTheme() {
@@ -429,40 +430,73 @@ function toggleChat() {
 
 function initChatbot() {
   chatState.initialized = true;
-  appendChatMsg('assistant', '¡Hola! Soy el Asistente SMS de CSFS. Puedo ayudarte a:\n\n• Entender cómo llenar los formularios ASR y RSO\n• Responder dudas sobre el sistema SMS\n\n¿En qué te puedo ayudar?');
+  chatHistory = [];
+  const greeting = '¡Hola! Soy AVI 👋 Estoy aquí para ayudarte a registrar tu reporte de seguridad de forma fácil, sin formularios complicados.\n\n¿Qué situación quieres reportar?';
+  chatHistory.push({ rol: 'assistant', contenido: greeting });
+  appendChatMsg('assistant', greeting);
 }
 
 async function sendChatMsg() {
   const input = document.getElementById('chat-text-input');
+  const sendBtn = document.querySelector('.chat-send-btn');
   const text = input?.value.trim();
   if (!text) return;
 
   input.value = '';
+  input.disabled = true;
+  if (sendBtn) sendBtn.disabled = true;
+
+  chatHistory.push({ rol: 'user', contenido: text });
   appendChatMsg('user', text);
 
-  const typingId = appendChatMsg('assistant', '...', true);
-  removeTyping(typingId);
-  appendChatMsg('assistant', localChatReply(text));
+  const typingId = appendChatMsg('assistant', '', true);
+
+  try {
+    const res = await fetch(`${CHAT_BASE}/portal/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mensajes: chatHistory, orgId: ORG_ID }),
+    });
+
+    if (!res.ok) throw new Error(`Error ${res.status}`);
+
+    const data = await res.json();
+    removeTyping(typingId);
+
+    const respText = data.texto || 'Hubo un problema procesando tu mensaje. Por favor intenta de nuevo.';
+    chatHistory.push({ rol: 'assistant', contenido: respText });
+    appendChatMsg('assistant', respText);
+
+    if (data.documentoCreado?.id) {
+      appendReporteCreado(data.documentoCreado.id);
+    }
+  } catch (err) {
+    removeTyping(typingId);
+    const errMsg = 'No pude conectarme en este momento. Por favor intenta de nuevo.';
+    chatHistory.push({ rol: 'assistant', contenido: errMsg });
+    appendChatMsg('assistant', errMsg);
+  } finally {
+    input.disabled = false;
+    if (sendBtn) sendBtn.disabled = false;
+    input.focus();
+  }
 }
 
-function localChatReply(text) {
-  const t = text.toLowerCase();
-  if (t.includes('asr') || t.includes('aviation safety')) {
-    return 'El **ASR (Aviation Safety Report)** es el formulario SMS-F001 para reportar peligros, incidentes o condiciones inseguras en operaciones de Handling. Haz clic en "Iniciar reporte" en la tarjeta ASR para comenzar.';
-  }
-  if (t.includes('rso') || t.includes('seguridad operacional')) {
-    return 'El **RSO (Reporte de Seguridad Operacional)** es el formulario FT-GSMS-001 para reportar eventos en rampa, operaciones terrestres y ground handling. Tiene 8 secciones que incluyen datos del evento, tipo, víctimas y evidencias fotográficas.';
-  }
-  if (t.includes('foto') || t.includes('imagen') || t.includes('evidencia')) {
-    return 'Puedes agregar fotos en la sección **Evidencias fotográficas** de cada formulario. Arrastra las imágenes al área marcada o haz clic para seleccionarlas. Se acepta JPG, PNG y WEBP hasta 10 MB por foto.';
-  }
-  if (t.includes('confidencial') || t.includes('anonimo') || t.includes('anónimo')) {
-    return 'Si marcas el reporte como **Confidencial**, tu identidad será protegida en informes públicos. Si marcas "No confidencial", el sistema enlazará el reporte para enviarte notificaciones de seguimiento.';
-  }
-  if (t.includes('contraseña') || t.includes('password') || t.includes('clave')) {
-    return 'Para acceso a Atalaya SMS contacta al Coordinador SMS de tu organización en sms@csfs.aero.';
-  }
-  return 'Entendido. Para más información puedes contactar al Coordinador SMS en sms@csfs.aero, o ingresar al sistema Atalaya donde nuestro asistente avanzado puede analizar reportes en detalle.';
+function appendReporteCreado(reporteId) {
+  const list = document.getElementById('chat-messages-list');
+  if (!list) return;
+
+  const div = document.createElement('div');
+  div.className = 'chat-msg chat-msg-assistant';
+  div.innerHTML = `
+    <div class="chat-bubble chat-bubble-success">
+      <div class="chat-success-title">✅ Reporte registrado</div>
+      <div class="chat-success-id">${reporteId}</div>
+      <div class="chat-success-note">Guarda este número para hacer seguimiento de tu reporte con el Coordinador SMS.</div>
+    </div>
+  `;
+  list.appendChild(div);
+  list.scrollTop = list.scrollHeight;
 }
 
 let _chatMsgId = 0;
@@ -473,8 +507,14 @@ function appendChatMsg(rol, texto, isTyping = false) {
   const id = `cm-${++_chatMsgId}`;
   const div = document.createElement('div');
   div.id = id;
-  div.className = `chat-msg chat-msg-${rol}${isTyping ? ' chat-msg-typing' : ''}`;
-  div.innerHTML = `<div class="chat-bubble">${formatChatText(texto)}</div>`;
+  div.className = `chat-msg chat-msg-${rol}`;
+
+  if (isTyping) {
+    div.innerHTML = '<div class="chat-bubble"><span class="typing-dots"><span></span><span></span><span></span></span></div>';
+  } else {
+    div.innerHTML = `<div class="chat-bubble">${formatChatText(texto)}</div>`;
+  }
+
   list.appendChild(div);
   list.scrollTop = list.scrollHeight;
   return id;
