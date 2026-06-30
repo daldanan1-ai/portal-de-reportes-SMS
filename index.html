@@ -109,6 +109,21 @@
               </div>
             </button>
 
+            <!-- Card seguimiento -->
+            <button type="button" class="report-card tracking" onclick="showTracking()" aria-label="Consultar estado de reporte">
+              <div class="card-top">
+                <div class="card-icon">🔍</div>
+                <div class="card-badge"><i class="ph ph-clock"></i> Consulta</div>
+              </div>
+              <div class="card-code">Seguimiento · ID</div>
+              <div class="card-title">Consultar estado</div>
+              <div class="card-desc">¿Ya generaste un reporte? Ingresa tu número de reporte para conocer su estado actual en el sistema.</div>
+              <div class="card-cta">
+                Consultar
+                <div class="cta-circle"><i class="ph-bold ph-arrow-right"></i></div>
+              </div>
+            </button>
+
           </div><!-- /.report-cards -->
 
           <!-- QR Box -->
@@ -126,6 +141,34 @@
 
         </div><!-- /.hero-content -->
       </div><!-- /.hero-wrap -->
+    </section>
+
+
+    <!-- ── SEGUIMIENTO DE REPORTE ── -->
+    <section id="report-tracking" class="page-section">
+      <div class="form-wrapper">
+        <div class="form-header">
+          <button type="button" class="form-back" onclick="showHome()">
+            <i class="ph-bold ph-arrow-left"></i> Inicio
+          </button>
+          <div class="form-type-badge badge-tracking"><i class="ph-bold ph-magnifying-glass"></i> Seguimiento</div>
+          <h2 class="form-title">Consultar estado de tu reporte</h2>
+          <p class="form-subtitle">Ingresa el número de reporte que recibiste al momento de crearlo.</p>
+        </div>
+
+        <div class="track-search-card">
+          <label class="field-label" for="track-id-input">Número de reporte</label>
+          <div class="track-input-row">
+            <input type="text" id="track-id-input" class="input" autocomplete="off" spellcheck="false"
+                   placeholder="Ej: a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                   onkeydown="if(event.key==='Enter') buscarReporte()">
+            <button type="button" class="btn-primary track-btn-buscar" onclick="buscarReporte()">
+              <i class="ph-bold ph-magnifying-glass"></i> Buscar
+            </button>
+          </div>
+          <div id="track-result"></div>
+        </div>
+      </div>
     </section>
 
 

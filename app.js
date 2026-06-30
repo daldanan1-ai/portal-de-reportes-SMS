@@ -68,6 +68,97 @@ function showHome() {
   showSection('home');
 }
 
+function showTracking() {
+  showSection('report-tracking');
+  document.getElementById('track-id-input').value = '';
+  document.getElementById('track-result').innerHTML = '';
+  setTimeout(() => document.getElementById('track-id-input').focus(), 200);
+}
+
+async function buscarReporte() {
+  const idInput  = document.getElementById('track-id-input');
+  const resultEl = document.getElementById('track-result');
+  const id = idInput.value.trim();
+
+  if (!id) {
+    resultEl.innerHTML = '<p class="track-error"><i class="ph-bold ph-warning-circle"></i> Por favor ingresa el número de reporte.</p>';
+    return;
+  }
+
+  resultEl.innerHTML = '<p class="track-loading"><i class="ph-bold ph-circle-notch"></i> Buscando...</p>';
+
+  const ESTADO_LABEL = {
+    NUEVO:         'Nuevo — pendiente de revisión',
+    EN_ANALISIS:   'En análisis por el equipo SMS',
+    EVALUADO:      'Evaluado',
+    EN_MITIGACION: 'En proceso de mitigación',
+    CERRADO:       'Cerrado',
+  };
+  const ESTADO_CLASS = {
+    NUEVO:         'track-estado-nuevo',
+    EN_ANALISIS:   'track-estado-analisis',
+    EVALUADO:      'track-estado-evaluado',
+    EN_MITIGACION: 'track-estado-mitigacion',
+    CERRADO:       'track-estado-cerrado',
+  };
+
+  try {
+    const token = await getToken();
+    const res = await fetch(`${API_BASE}/reportes/${encodeURIComponent(id)}/seguimiento`, {
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+
+    if (res.status === 404) {
+      resultEl.innerHTML = `<div class="track-not-found">
+        <i class="ph-bold ph-warning-circle"></i>
+        <p>No encontramos ningún reporte con ese número. Verifica que lo hayas copiado correctamente.</p>
+      </div>`;
+      return;
+    }
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const d = await res.json();
+    const fechaEvento = d.fechaEvento ? new Date(d.fechaEvento).toLocaleDateString('es-CO') : 'No especificada';
+    const creadoEn   = d.creadoEn    ? new Date(d.creadoEn).toLocaleDateString('es-CO')    : '';
+
+    resultEl.innerHTML = `
+      <div class="track-result-card">
+        <div class="track-result-header">
+          <div class="track-result-tipo">${d.tipo}</div>
+          <div class="track-estado-badge ${ESTADO_CLASS[d.estado] ?? ''}">${ESTADO_LABEL[d.estado] ?? d.estado}</div>
+        </div>
+        <div class="track-result-grid">
+          <div class="track-field">
+            <span class="track-field-label">Número de reporte</span>
+            <span class="track-field-value track-id-mono">${d.id}</span>
+          </div>
+          ${d.area ? `<div class="track-field">
+            <span class="track-field-label">Área</span>
+            <span class="track-field-value">${d.area}</span>
+          </div>` : ''}
+          <div class="track-field">
+            <span class="track-field-label">Fecha del evento</span>
+            <span class="track-field-value">${fechaEvento}</span>
+          </div>
+          <div class="track-field">
+            <span class="track-field-label">Fecha de registro</span>
+            <span class="track-field-value">${creadoEn}</span>
+          </div>
+          ${d.aeropuertoIcao ? `<div class="track-field">
+            <span class="track-field-label">Aeropuerto</span>
+            <span class="track-field-value">${d.aeropuertoIcao}</span>
+          </div>` : ''}
+        </div>
+        <p class="track-result-note">Para consultas sobre tu reporte, contacta al equipo de seguridad: <a href="mailto:sms@csfs.aero">sms@csfs.aero</a></p>
+      </div>`;
+  } catch (e) {
+    resultEl.innerHTML = `<div class="track-error">
+      <i class="ph-bold ph-warning"></i>
+      No pudimos consultar tu reporte. Verifica tu conexión e intenta de nuevo.
+    </div>`;
+  }
+}
+
 function showForm(type) {
   resetForm(type);
   showSection(`form-${type}`);
