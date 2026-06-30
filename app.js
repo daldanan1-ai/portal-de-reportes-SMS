@@ -102,14 +102,18 @@ function resetForm(type) {
 
 /* ── CARGA INICIAL ───────────────────────────────────────── */
 window.addEventListener('load', () => {
-  new QRCode(document.getElementById('qr-container'), {
-    text: window.location.href,
-    width: 180,
-    height: 180,
-    colorDark: '#1e40af',
-    colorLight: '#ffffff',
-    correctLevel: QRCode.CorrectLevel.H,
-  });
+  try {
+    new QRCode(document.getElementById('qr-container'), {
+      text: window.location.href,
+      width: 180,
+      height: 180,
+      colorDark: '#1e40af',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.H,
+    });
+  } catch (e) {
+    console.warn('QR code error:', e);
+  }
 
   showHome();
   showChatWidget();
@@ -408,7 +412,7 @@ async function submitRSO(e) {
 /* ── CHATBOT ─────────────────────────────────────────────── */
 function showChatWidget() {
   const w = document.getElementById('chat-widget');
-  if (w) w.style.display = 'block';
+  if (w) w.style.display = 'flex';
 }
 
 function toggleChat() {
