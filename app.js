@@ -7,23 +7,10 @@ const API_BASE  = 'https://thriving-kindness-production-443e.up.railway.app/api'
 const CHAT_BASE = 'https://welcoming-trust-production-b45b.up.railway.app';
 const ORG_ID    = '0cdba0e3-9586-49f7-8bad-046c6a7d11f0';
 
-const _SVC = { email: 'josequinteroh0000@gmail.com', pass: 'Johana130615' };
-let _token   = null;
-let _tokenEx = 0;
-
-async function getToken() {
-  if (_token && Date.now() < _tokenEx) return _token;
-  const res = await fetch(`${API_BASE}/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: _SVC.email, password: _SVC.pass }),
-  });
-  if (!res.ok) throw new Error('No se pudo conectar con Atalaya SMS');
-  const d = await res.json();
-  _token   = d.token;
-  _tokenEx = Date.now() + 23 * 3600 * 1000;
-  return _token;
-}
+// Los endpoints del portal en Atalaya (crear reporte, subir adjuntos y consultar
+// seguimiento) son PÚBLICOS: no requieren autenticación. Por eso el portal NO
+// almacena ninguna credencial — sería un riesgo de seguridad exponerla en el
+// código del cliente (que es visible para cualquiera).
 
 /* ── ESTADO ──────────────────────────────────────────────── */
 let selectedPhotos = { asr: [], oma: [] };
@@ -127,10 +114,7 @@ async function buscarReporte() {
   };
 
   try {
-    const token = await getToken();
-    const res = await fetch(`${API_BASE}/reportes/${encodeURIComponent(id)}/seguimiento`, {
-      headers: { 'Authorization': `Bearer ${token}` },
-    });
+    const res = await fetch(`${API_BASE}/reportes/${encodeURIComponent(id)}/seguimiento`);
 
     if (res.status === 404) {
       resultEl.innerHTML = `<div class="track-not-found">
@@ -254,14 +238,6 @@ function collectForm(formId) {
     data[key] = data[key] ? `${data[key]} | ${value}` : value;
   });
   return data;
-}
-
-async function authHeaders() {
-  const token = await getToken();
-  return {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`,
-  };
 }
 
 /* ── BUILDERS DE TEXTO PARA API ──────────────────────────── */
@@ -416,14 +392,12 @@ async function uploadPhotos(reporteId, type) {
   const files = selectedPhotos[type] || [];
   if (!files.length) return;
 
-  const token = await getToken();
   for (const file of files) {
     try {
       const formData = new FormData();
       formData.append('archivo', file);
       await fetch(`${API_BASE}/reportes/${reporteId}/adjuntos`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
         body: formData,
       });
     } catch (err) {
@@ -445,7 +419,7 @@ async function submitASR(e) {
   try {
     const res = await fetch(`${API_BASE}/reportes`, {
       method: 'POST',
-      headers: await authHeaders(),
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         organizacionId:        ORG_ID,
         tipo:                  'ASR',
@@ -492,7 +466,7 @@ async function submitRSO(e) {
   try {
     const res = await fetch(`${API_BASE}/reportes`, {
       method: 'POST',
-      headers: await authHeaders(),
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         organizacionId:        ORG_ID,
         tipo:                  'RSO',
