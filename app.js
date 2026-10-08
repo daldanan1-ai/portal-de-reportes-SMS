@@ -5,7 +5,7 @@
 
 const API_BASE  = 'https://atalaya-backend-p6fi.onrender.com/api';
 const CHAT_BASE = 'https://atalaya-avi-jquintero.onrender.com';
-const ORG_ID    = '0cdba0e3-9586-49f7-8bad-046c6a7d11f0';
+const ORG_ID    = 'adeb8bf1-3e95-4a54-9ac3-a970a1c65bab';
 
 // Los endpoints del portal en Atalaya (crear reporte, subir adjuntos y consultar
 // seguimiento) son PÚBLICOS: no requieren autenticación. Por eso el portal NO
