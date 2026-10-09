@@ -5,7 +5,14 @@
 
 const API_BASE  = 'https://atalaya-backend-p6fi.onrender.com/api';
 const CHAT_BASE = 'https://atalaya-avi-jquintero.onrender.com';
-const ORG_ID    = 'adeb8bf1-3e95-4a54-9ac3-a970a1c65bab';
+// Un portal para todos los clientes: cada organización comparte su propio link
+// (?org=<id>, lo copia el administrador desde Atalaya → Usuarios). Sin el
+// parámetro se usa la organización por defecto, para no romper links viejos.
+const ORG_POR_DEFECTO = 'adeb8bf1-3e95-4a54-9ac3-a970a1c65bab';
+const ORG_ID = (() => {
+  const org = new URLSearchParams(window.location.search).get('org');
+  return org && /^[0-9a-f-]{36}$/i.test(org) ? org : ORG_POR_DEFECTO;
+})();
 
 // Los endpoints del portal en Atalaya (crear reporte, subir adjuntos y consultar
 // seguimiento) son PÚBLICOS: no requieren autenticación. Por eso el portal NO
